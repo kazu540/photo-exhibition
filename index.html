@@ -1,0 +1,1139 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>写真展レイアウト</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: control rail on the left, the wall itself is the working surface (stage) on the right */
+:root{
+  --bg:#eceef1; --panel:#ffffff; --ink:#1c2228; --muted:#5d6974; --line:#d3d9df; --soft:#f4f6f8;
+  --accent:#2c5c8c; --accent-ink:#ffffff; --accent-soft:#e1eaf4;
+  --ok:#1d7549; --ok-soft:#e0f2e8; --ng:#bb3a2c; --ng-soft:#fbe6e2; --warn:#9a6512; --warn-soft:#faefd8;
+  --stage:#dfe3e7; --wall:#fbfcfd; --grid:rgba(44,92,140,.09); --piece:#dbe6f1; --piece-ink:#23405e; --hatch:rgba(44,92,140,.10);
+  --font:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP","Yu Gothic",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15191d; --panel:#1d2227; --ink:#e4e8ec; --muted:#9aa5b0; --line:#323a42; --soft:#232a30;
+    --accent:#79a9d8; --accent-ink:#0f1a25; --accent-soft:#22374b;
+    --ok:#5fc48f; --ok-soft:#173326; --ng:#f08474; --ng-soft:#3a1f1b; --warn:#e2b25c; --warn-soft:#352a14;
+    --stage:#101316; --wall:#262d33; --grid:rgba(121,169,216,.10); --piece:#2b3f53; --piece-ink:#cfe0f1; --hatch:rgba(121,169,216,.12);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15191d; --panel:#1d2227; --ink:#e4e8ec; --muted:#9aa5b0; --line:#323a42; --soft:#232a30;
+  --accent:#79a9d8; --accent-ink:#0f1a25; --accent-soft:#22374b;
+  --ok:#5fc48f; --ok-soft:#173326; --ng:#f08474; --ng-soft:#3a1f1b; --warn:#e2b25c; --warn-soft:#352a14;
+  --stage:#101316; --wall:#262d33; --grid:rgba(121,169,216,.10); --piece:#2b3f53; --piece-ink:#cfe0f1; --hatch:rgba(121,169,216,.12);
+  color-scheme:dark;
+}
+html,body{height:100%}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.55}
+*{box-sizing:border-box}
+button,input,select{font:inherit;color:inherit}
+.num,.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+.app{height:100%;display:grid;grid-template-columns:350px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);grid-template-areas:"top top" "side main"}
+.top{grid-area:top;display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));border-bottom:1px solid var(--line);background:var(--panel)}
+.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-right:auto;min-width:0}
+.brand h1{margin:0;font-size:18px;font-weight:700;letter-spacing:.04em}
+.brand p{margin:0;color:var(--muted);font-size:12.5px}
+.seg{display:inline-flex;background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:6px 14px;border-radius:6px;cursor:pointer;font-weight:500;color:var(--muted);white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg.sm button{padding:4px 10px;font-size:13px}
+
+.side{grid-area:side;overflow-y:auto;border-right:1px solid var(--line);background:var(--panel);padding-block:4px 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:16px}
+.sec{padding-block:14px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.sec:last-child{border-bottom:0}
+.sec h2{margin:0;font-size:11.5px;letter-spacing:.12em;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:8px}
+.sec h2 .cnt{font-family:var(--mono);letter-spacing:0;background:var(--soft);border-radius:10px;padding:0 7px;font-weight:500}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.fld{display:flex;flex-direction:column;gap:3px;min-width:0}
+.fld>span{font-size:12px;color:var(--muted)}
+.inp{display:flex;align-items:center;border:1px solid var(--line);border-radius:6px;background:var(--panel);overflow:hidden}
+.inp:focus-within{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.inp input,.inp select{border:0;background:transparent;padding:6px 8px;width:100%;min-width:0;outline:0;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.inp select{font-family:var(--font)}
+.inp .u{padding-right:8px;color:var(--muted);font-size:12px;font-family:var(--mono)}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:7px 12px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.btn:hover{background:var(--soft)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.danger{color:var(--ng)}
+.btn:focus-visible,.seg button:focus-visible,.row:focus-visible,.piece:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+.note{font-size:12px;color:var(--muted);margin:0}
+.chk{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}
+.colors{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.colors label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
+.colors input{width:100%;height:30px;border:1px solid var(--line);border-radius:6px;background:var(--panel);padding:2px;cursor:pointer}
+
+.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.row{display:grid;grid-template-columns:26px 34px minmax(0,1fr) auto;align-items:center;gap:8px;padding:5px 6px;border-radius:7px;border:1px solid transparent;cursor:pointer}
+.row:hover{background:var(--soft)}
+.row.sel{border-color:var(--accent);background:var(--accent-soft)}
+.row .idx{font-family:var(--mono);font-size:12px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--soft);border:1px solid var(--line)}
+.row.bad .idx{background:var(--ng-soft);border-color:var(--ng);color:var(--ng)}
+.row.warn .idx{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.row .th{width:34px;height:34px;border-radius:4px;background:var(--soft) center/cover no-repeat;border:1px dashed var(--line)}
+.row .th.has{border-style:solid}
+.row .nm{min-width:0;line-height:1.3}
+.row .nm b{font-weight:500;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .nm small{font-family:var(--mono);color:var(--muted);font-size:11.5px}
+.row .acts{display:flex;gap:2px}
+.icon{width:28px;height:28px;padding:0;border:0;background:transparent;border-radius:6px;cursor:pointer;display:grid;place-items:center;color:var(--muted)}
+.icon:hover{background:var(--panel);color:var(--ink)}
+.icon svg{width:16px;height:16px}
+.empty{padding:14px;border:1px dashed var(--line);border-radius:8px;color:var(--muted);font-size:13px;text-align:center}
+
+.selbox{background:var(--soft);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.selbox .hd{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.selbox .hd b{font-size:15px}
+.readout{display:grid;grid-template-columns:repeat(2,1fr);gap:4px 12px;font-size:12px;color:var(--muted)}
+.readout span b{font-family:var(--mono);color:var(--ink);font-weight:500}
+.alert{font-size:12.5px;border-radius:6px;padding:7px 9px;background:var(--warn-soft);color:var(--warn);display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+input[type=range]{width:100%;accent-color:var(--accent)}
+
+.main{grid-area:main;display:flex;flex-direction:column;min-width:0;min-height:0}
+.verdict{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-block:12px;padding-left:20px;padding-right:max(16px,env(safe-area-inset-right,0px));border-bottom:1px solid var(--line);background:var(--panel)}
+.pill{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:15px;padding:6px 14px 6px 10px;border-radius:999px}
+.pill svg{width:18px;height:18px}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.ng{background:var(--ng-soft);color:var(--ng)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.idle{background:var(--soft);color:var(--muted)}
+.vtext{font-size:13px;color:var(--muted);min-width:0;flex:1 1 280px}
+.vtext b{color:var(--ink);font-weight:500}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
+.chip.ok{border-color:transparent;background:var(--ok-soft);color:var(--ok)}
+.chip.ng{border-color:transparent;background:var(--ng-soft);color:var(--ng)}
+.chip.warn{border-color:transparent;background:var(--warn-soft);color:var(--warn)}
+
+.stage{position:relative;flex:1;min-height:0;background:var(--stage);overflow:hidden;user-select:none;-webkit-user-select:none}
+.ruler{position:absolute;font-family:var(--mono);font-size:10px;color:var(--muted);pointer-events:none}
+.ruler i{position:absolute;background:var(--muted);opacity:.55}
+.ruler em{position:absolute;font-style:normal;white-space:nowrap}
+.wall{position:absolute;background:var(--wall);box-shadow:0 0 0 1px var(--line),0 10px 30px rgba(0,0,0,.08);transition:background-color .3s}
+.wall .gridbg{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:var(--gs) var(--gs)}
+.wall .edgeline{position:absolute;border:1px dashed var(--grid);pointer-events:none;border-color:rgba(127,140,155,.45)}
+.wsize{position:absolute;font-family:var(--mono);font-size:11.5px;color:var(--muted);pointer-events:none;white-space:nowrap}
+
+.piece{position:absolute;touch-action:none;cursor:grab}
+.piece:active{cursor:grabbing}
+.pframe{position:absolute;inset:0;border-style:solid;display:flex}
+.pmat{flex:1;display:flex;min-width:0}
+.pphoto{flex:1;position:relative;background-color:var(--piece);background-repeat:no-repeat;min-width:0;overflow:hidden}
+.piece:not(.hasimg) .pphoto{background-image:repeating-linear-gradient(135deg,var(--hatch) 0 6px,transparent 6px 12px)}
+.plabel{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--piece-ink);pointer-events:none;line-height:1.25;padding:2px;overflow:hidden}
+.plabel b{font-size:13px;font-weight:700}
+.plabel span{font-family:var(--mono);font-size:10.5px;opacity:.85}
+.plabel small{font-size:10.5px;opacity:.8;margin-top:2px}
+.piece.hasimg .plabel{display:none}
+.pnum{position:absolute;left:3px;top:3px;font-family:var(--mono);font-size:10px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--panel);color:var(--ink);display:grid;place-items:center;box-shadow:0 0 0 1px var(--line);pointer-events:none}
+.piece .ring{position:absolute;inset:-2px;border:2px solid transparent;pointer-events:none;border-radius:1px}
+.piece.sel .ring{border-color:var(--accent)}
+.piece.warn .ring{border-color:var(--warn);border-style:dashed}
+.piece.bad .ring{border-color:var(--ng)}
+.piece.bad.sel .ring,.piece.warn.sel .ring{box-shadow:0 0 0 2px var(--accent)}
+.piece.bad .pphoto{background-color:var(--ng-soft)}
+.guide{position:absolute;pointer-events:none;background:#e0457b}
+.dim{position:absolute;pointer-events:none;border-color:var(--accent);opacity:.85}
+.dim.h{border-top:1px dashed}
+.dim.v{border-left:1px dashed}
+.dimlab{position:absolute;pointer-events:none;font-family:var(--mono);font-size:10.5px;background:var(--accent);color:var(--accent-ink);padding:0 4px;border-radius:3px;transform:translate(-50%,-50%);white-space:nowrap}
+.eye{position:absolute;left:0;right:0;border-top:1px dashed rgba(200,90,40,.7);pointer-events:none}
+.eye span{position:absolute;left:4px;top:-17px;font-size:10.5px;color:#c4602b;font-family:var(--mono);white-space:nowrap}
+.dropzone{position:absolute;inset:0;border:3px dashed var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent);display:none;place-items:center;font-weight:700;color:var(--accent);font-size:16px;pointer-events:none;z-index:50}
+.stage.dragover .dropzone{display:grid}
+.stagebar{position:absolute;right:max(12px,env(safe-area-inset-right,0px));bottom:12px;display:flex;gap:6px;z-index:20}
+.stagebar .btn{box-shadow:0 2px 8px rgba(0,0,0,.12)}
+
+/* photo + preview modes */
+.mode-photo .piece{cursor:move}
+.mode-photo .piece:not(.hasimg){cursor:pointer}
+.mode-preview .gridbg,.mode-preview .edgeline,.mode-preview .pnum,.mode-preview .plabel,.mode-preview .ruler,.mode-preview .dim,.mode-preview .dimlab{display:none}
+.mode-preview .piece .ring{display:none}
+.mode-preview .piece{box-shadow:0 2px 3px rgba(0,0,0,.18),0 8px 22px rgba(0,0,0,.16)}
+.mode-preview .piece:not(.hasimg) .pphoto{background-image:none;background-color:#c9cbcc}
+.mode-preview .wall{box-shadow:0 10px 40px rgba(0,0,0,.18)}
+.mode-preview .wall .light{display:block}
+.wall .light{display:none;position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% -10%,rgba(255,250,235,.35),transparent 60%),linear-gradient(transparent 85%,rgba(0,0,0,.06))}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:13px;z-index:100;opacity:0;transition:opacity .2s;pointer-events:none;max-width:calc(100vw - 32px)}
+.toast.on{opacity:1}
+.kbd{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-radius:4px;padding:0 4px}
+
+.modal{position:fixed;inset:0;z-index:90;background:rgba(15,20,25,.55);display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.mbox{background:var(--panel);color:var(--ink);border-radius:12px;width:min(980px,100%);max-height:100%;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);min-height:0}
+.mhd{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line)}
+.mhd h2{margin:0;font-size:16px}
+.mbody{display:grid;grid-template-columns:260px minmax(0,1fr);gap:18px;padding:16px 18px;overflow:auto;min-height:0}
+.mopts{display:flex;flex-direction:column;gap:12px}
+.thumbs{display:flex;gap:14px;flex-wrap:wrap;align-content:flex-start;background:var(--stage);border-radius:8px;padding:14px;min-height:240px}
+.thumbs figure{margin:0;display:flex;flex-direction:column;gap:6px;align-items:center;flex:0 1 auto}
+.thumbs canvas{display:block;width:auto;max-width:100%;height:auto;max-height:380px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.thumbs figcaption{font-size:12px;color:var(--muted)}
+.mft{display:flex;align-items:center;gap:12px;justify-content:flex-end;padding:12px 18px;border-top:1px solid var(--line);flex-wrap:wrap}
+.mft .note{margin-right:auto}
+.inp input[type=text]{font-family:var(--font)}
+@media (max-width:700px){.mbody{grid-template-columns:1fr}.thumbs canvas{max-height:300px}}
+@media (max-width:860px){
+  html,body{height:auto}
+  .app{height:auto;display:flex;flex-direction:column}
+  .top{order:0}
+  .main{order:1}
+  .side{order:2;border-right:0;overflow:visible;padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .stage{flex:none;height:66vh;min-height:380px}
+  .verdict{padding-left:max(16px,env(safe-area-inset-left,0px))}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="app mode-layout" id="app">
+  <header class="top">
+    <div class="brand">
+      <h1>写真展レイアウト</h1>
+      <p>展示スペースに作品が収まるか確かめ、写真をはめこんでプレビュー</p>
+    </div>
+    <div class="seg" role="group" aria-label="モード" id="modeSeg">
+      <button type="button" data-mode="layout" aria-pressed="true">1 配置</button>
+      <button type="button" data-mode="photo" aria-pressed="false">2 写真</button>
+      <button type="button" data-mode="preview" aria-pressed="false">3 プレビュー</button>
+    </div>
+    <button class="btn pri" type="button" id="pdfOpen"><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 2.5h7l3.5 3.5v11.5H5z"/><path d="M12 2.5V6h3.5M10 9v6M7.5 12.5L10 15l2.5-2.5"/></svg>PDFに出力</button>
+  </header>
+
+  <aside class="side">
+    <section class="sec">
+      <h2>展示スペース</h2>
+      <div class="grid2">
+        <label class="fld"><span>横幅</span><div class="inp"><input id="wallW" type="number" min="10" step="1" inputmode="decimal"><i class="u">cm</i></div></label>
+        <label class="fld"><span>高さ</span><div class="inp"><input id="wallH" type="number" min="10" step="1" inputmode="decimal"><i class="u">cm</i></div></label>
+        <label class="fld"><span>壁端からの余白</span><div class="inp"><input id="edge" type="number" min="0" step="0.5" inputmode="decimal"><i class="u">cm</i></div></label>
+        <label class="fld"><span>作品どうしの間隔</span><div class="inp"><input id="gap" type="number" min="0" step="0.5" inputmode="decimal"><i class="u">cm</i></div></label>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h2>作品を追加</h2>
+      <div class="grid3" style="grid-template-columns:1.4fr 1fr .8fr">
+        <label class="fld"><span>用紙サイズ</span><div class="inp"><select id="addSize"></select></div></label>
+        <div class="fld"><span>向き</span><div class="seg sm" id="addOrient" role="group" aria-label="向き"><button type="button" data-o="P" aria-pressed="true">縦</button><button type="button" data-o="L" aria-pressed="false">横</button></div></div>
+        <label class="fld"><span>枚数</span><div class="inp"><input id="addCount" type="number" min="1" max="50" step="1" value="1"></div></label>
+      </div>
+      <div class="grid2" id="customFields" hidden>
+        <label class="fld"><span>横幅</span><div class="inp"><input id="customW" type="number" min="1" step="0.1" value="50"><i class="u">cm</i></div></label>
+        <label class="fld"><span>高さ</span><div class="inp"><input id="customH" type="number" min="1" step="0.1" value="70"><i class="u">cm</i></div></label>
+      </div>
+      <div class="grid2">
+        <label class="fld"><span>マット幅（片側）</span><div class="inp"><input id="addMat" type="number" min="0" step="0.5" value="0"><i class="u">cm</i></div></label>
+        <label class="fld"><span>額縁の幅（片側）</span><div class="inp"><input id="addFrame" type="number" min="0" step="0.5" value="0"><i class="u">cm</i></div></label>
+      </div>
+      <p class="note">額装する場合はマットと額縁の幅が外寸に加わります。額なしで貼るなら 0 のまま。</p>
+      <button class="btn pri" id="addBtn" type="button">作品を追加して自動配置</button>
+    </section>
+
+    <section class="sec">
+      <h2>作品リスト <span class="cnt" id="cnt">0</span></h2>
+      <ul class="list" id="list"></ul>
+      <div class="btns">
+        <button class="btn" type="button" id="manyBtn">写真をまとめて読み込む</button>
+        <button class="btn ghost danger" type="button" id="clearAll">すべて削除</button>
+      </div>
+      <p class="note">まとめて読み込むと、写真の向きに合う空き枠へ順にはめこみます。写真は壁面にドラッグ＆ドロップしても入ります。</p>
+    </section>
+
+    <section class="sec" id="selSec">
+      <h2>選択中の作品</h2>
+      <div class="empty" id="selEmpty">壁面の作品をクリックすると、位置の数値入力や写真の調整ができます。</div>
+      <div class="selbox" id="selBox" hidden>
+        <div class="hd"><b id="selName">—</b>
+          <div class="seg sm" id="selOrient" role="group" aria-label="向き"><button type="button" data-o="P" aria-pressed="true">縦</button><button type="button" data-o="L" aria-pressed="false">横</button></div>
+        </div>
+        <div class="grid2">
+          <label class="fld"><span>左端から（X）</span><div class="inp"><input id="selX" type="number" step="0.5"><i class="u">cm</i></div></label>
+          <label class="fld"><span>上端から（Y）</span><div class="inp"><input id="selY" type="number" step="0.5"><i class="u">cm</i></div></label>
+          <label class="fld"><span>マット幅</span><div class="inp"><input id="selMat" type="number" min="0" step="0.5"><i class="u">cm</i></div></label>
+          <label class="fld"><span>額縁の幅</span><div class="inp"><input id="selFrame" type="number" min="0" step="0.5"><i class="u">cm</i></div></label>
+        </div>
+        <div class="readout" id="selRead"></div>
+        <div class="btns">
+          <button class="btn" type="button" id="selCenterX">左右中央へ</button>
+          <button class="btn" type="button" id="selCenterY">上下中央へ</button>
+          <button class="btn ghost danger" type="button" id="selDel">削除</button>
+        </div>
+        <div style="border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:8px">
+          <div class="btns">
+            <button class="btn pri" type="button" id="selFile">写真を選ぶ</button>
+            <button class="btn ghost" type="button" id="selClear" hidden>写真を外す</button>
+          </div>
+          <div id="selPhotoOpts" hidden style="display:flex;flex-direction:column;gap:8px">
+            <div class="seg sm" id="selFit" role="group" aria-label="はめこみ方"><button type="button" data-f="cover" aria-pressed="true">枠いっぱい（トリミング）</button><button type="button" data-f="contain" aria-pressed="false">全体を表示</button></div>
+            <label class="fld"><span>拡大 <b class="num" id="zoomVal">100%</b></span><input id="selZoom" type="range" min="1" max="3" step="0.01"></label>
+            <p class="note">「写真」モードで写真をドラッグすると、見せる位置を動かせます。</p>
+            <div class="alert" id="selAlert" hidden></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h2>自動配置</h2>
+      <div class="btns">
+        <button class="btn" type="button" data-pack="auto">おまかせ</button>
+        <button class="btn" type="button" data-pack="row">横に並べる</button>
+        <button class="btn" type="button" data-pack="col">縦に並べる</button>
+      </div>
+      <label class="fld"><span>並べる高さの基準</span><div class="inp"><select id="vAlign"><option value="eye">目線の高さに中心を合わせる</option><option value="center">展示スペースの中央</option></select></div></label>
+      <div class="btns">
+        <button class="btn ghost" type="button" id="centerAllX">全体を左右中央へ</button>
+        <button class="btn ghost" type="button" id="centerAllY">全体を上下中央へ</button>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h2>見え方</h2>
+      <div class="colors">
+        <label>壁の色<input type="color" id="wallColor"></label>
+        <label>額縁の色<input type="color" id="frameColor"></label>
+        <label>マットの色<input type="color" id="matColor"></label>
+      </div>
+      <label class="chk"><input type="checkbox" id="eyeOn"> 目線ライン（床から 145cm）を表示</label>
+      <label class="fld"><span>展示スペース下端の床からの高さ</span><div class="inp"><input id="floor" type="number" min="0" step="1"><i class="u">cm</i></div></label>
+      <p class="note">操作：ドラッグで移動（他の作品や中央線に吸着、<span class="kbd">Alt</span>で吸着オフ）、矢印キーで 0.5cm、<span class="kbd">Shift</span>+矢印で 5cm 移動。</p>
+    </section>
+  </aside>
+
+  <main class="main">
+    <div class="verdict" id="verdict"></div>
+    <div class="stage" id="stage">
+      <div class="ruler" id="rulerTop"></div>
+      <div class="ruler" id="rulerLeft"></div>
+      <div class="wall" id="wall">
+        <div class="gridbg"></div>
+        <div class="edgeline" id="edgeLine"></div>
+        <div class="light"></div>
+        <div id="eyeLine" class="eye" hidden><span>目線 145cm</span></div>
+        <div id="pieces"></div>
+        <div id="dims"></div>
+        <div id="guides"></div>
+      </div>
+      <div class="wsize" id="wsize"></div>
+      <div class="dropzone">写真をドロップして枠にはめこむ</div>
+    </div>
+  </main>
+</div>
+<input type="file" id="fileOne" accept="image/*" hidden>
+<input type="file" id="fileMany" accept="image/*" multiple hidden>
+<div class="modal" id="pdfModal" hidden role="dialog" aria-modal="true" aria-labelledby="pdfTitle">
+  <div class="mbox">
+    <div class="mhd"><h2 id="pdfTitle">PDFに出力</h2><button class="icon" type="button" id="pdfClose" aria-label="閉じる"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 5l10 10M15 5L5 15"/></svg></button></div>
+    <div class="mbody">
+      <div class="mopts">
+        <label class="fld"><span>展示タイトル</span><div class="inp"><input id="exTitle" type="text" maxlength="60" placeholder="例：春の写真展"></div></label>
+        <div class="fld"><span>用紙</span><div class="seg sm" id="exPaper" role="group" aria-label="用紙"><button type="button" data-v="A4" aria-pressed="true">A4</button><button type="button" data-v="A3" aria-pressed="false">A3</button></div></div>
+        <div class="fld"><span>向き</span><div class="seg sm" id="exOrient" role="group" aria-label="向き"><button type="button" data-v="auto" aria-pressed="true">自動</button><button type="button" data-v="P" aria-pressed="false">縦</button><button type="button" data-v="L" aria-pressed="false">横</button></div></div>
+        <div class="fld"><span>入れるページ</span>
+          <label class="chk"><input type="checkbox" id="exPreview" checked> 完成イメージ</label>
+          <label class="chk"><input type="checkbox" id="exPlan" checked> 設置図（寸法と位置の一覧）</label>
+        </div>
+        <p class="note">設置図は 1:10 などの縮尺で描いています。印刷するときは「実際のサイズ（100%）」を選ぶと、図面上の長さを定規で測れます。</p>
+      </div>
+      <div class="thumbs" id="thumbs"></div>
+    </div>
+    <div class="mft"><span class="note" id="pdfMsg"></span><button class="btn" type="button" id="pdfCancel">閉じる</button><button class="btn pri" type="button" id="pdfSave">PDFを保存</button></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(() => {
+const SIZES = [
+  {g:'A判', items:[['A0',84.1,118.9],['A1',59.4,84.1],['A2',42,59.4],['A3',29.7,42],['A3ノビ',32.9,48.3],['A4',21,29.7],['A5',14.8,21]]},
+  {g:'B判', items:[['B1',72.8,103],['B2',51.5,72.8],['B3',36.4,51.5],['B4',25.7,36.4],['B5',18.2,25.7]]},
+  {g:'写真用紙', items:[['全紙',45.7,56],['半切',35.6,43.2],['四切',25.4,30.5],['六切',20.3,25.4],['八切',16.5,21.6],['2L',12.7,17.8],['L判',8.9,12.7]]},
+  {g:'その他', items:[['正方形 30cm',30,30],['正方形 20cm',20,20],['カスタム',0,0]]}
+];
+const SIZE_MAP = {}; SIZES.forEach(g=>g.items.forEach(([k,w,h])=>SIZE_MAP[k]={w,h}));
+const EPS = 0.05, EYE = 145;
+const $ = id => document.getElementById(id);
+const fmt = n => (Math.round(n*10)/10).toFixed(1).replace(/\.0$/,'');
+const fmt1 = n => (Math.round(n*10)/10).toFixed(1);
+
+/* ---------- state ---------- */
+let S;
+const imgs = new Map();
+let addOrient = 'P';
+function newItem(key,w,h,orient,mat,frame){
+  const bw=Math.min(w,h), bh=Math.max(w,h);
+  return {id:'p'+(S.seq++)+'_'+Math.random().toString(36).slice(2,6), key, bw, bh, orient: bw===bh?'P':orient, mat, frame, x:0, y:0, fit:'cover', zoom:1, px:50, py:50, iw:0, ih:0};
+}
+function defaultState(){
+  S = {W:100,H:200,edge:5,gap:5,floor:0,eye:true,vAlign:'eye',wallColor:'#f1f0ec',frameColor:'#222222',matColor:'#fbfbf8',mode:'layout',items:[],sel:null,seq:1,title:'写真展'};
+  for(let i=0;i<3;i++) S.items.push(newItem('A3',29.7,42,'P',0,0));
+  S.items.push(newItem('A4',21,29.7,'L',0,0));
+  applyPack('auto', true);
+}
+function save(){ clearTimeout(save.t); save.t=setTimeout(()=>{ try{ localStorage.setItem('photo-layout-v1', JSON.stringify(S)); }catch(e){} },250); }
+function load(){ try{ const j=JSON.parse(localStorage.getItem('photo-layout-v1')); if(j && Array.isArray(j.items)){ S=j; return true; } }catch(e){} return false; }
+
+/* ---------- image store (IndexedDB, optional) ---------- */
+const idb = (()=>{
+  let p=null;
+  const open=()=> p || (p=new Promise((res,rej)=>{ try{ const r=indexedDB.open('photo-layout',1); r.onupgradeneeded=()=>r.result.createObjectStore('img'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);}catch(e){rej(e)} }));
+  const tx=(mode,fn)=>open().then(db=>new Promise((res,rej)=>{ const t=db.transaction('img',mode); const r=fn(t.objectStore('img')); t.oncomplete=()=>res(r&&r.result); t.onerror=()=>rej(t.error); })).catch(()=>null);
+  return { put:(k,v)=>tx('readwrite',s=>s.put(v,k)), get:k=>tx('readonly',s=>s.get(k)), del:k=>tx('readwrite',s=>s.delete(k)) };
+})();
+
+/* ---------- geometry ---------- */
+function dims(it){
+  const pw = it.orient==='P'?it.bw:it.bh, ph = it.orient==='P'?it.bh:it.bw, m=(+it.mat||0)+(+it.frame||0);
+  return {w:pw+2*m, h:ph+2*m, pw, ph};
+}
+function nameOf(it){
+  const sq = it.bw===it.bh;
+  if(it.key==='カスタム') return `カスタム ${fmt(dims(it).pw)}×${fmt(dims(it).ph)}`;
+  return sq ? it.key : `${it.key} ${it.orient==='P'?'縦':'横'}`;
+}
+const byId = id => S.items.find(i=>i.id===id);
+function eyeY(){ const y = S.H - (EYE - (+S.floor||0)); return (y>0 && y<S.H) ? y : null; }
+
+function alignedStart(len, opts){
+  const inner = opts.H - 2*opts.edge;
+  if(len >= inner) return opts.edge;
+  const ey = eyeY();
+  const c = (S.vAlign==='eye' && ey!==null) ? ey : opts.H/2;
+  return Math.min(Math.max(c - len/2, opts.edge), opts.H - opts.edge - len);
+}
+function packLines(list, axis, opts){
+  const {W,H,edge,gap:g} = opts;
+  const innerW=W-2*edge, innerH=H-2*edge;
+  const main = axis==='row'?innerW:innerH, cross = axis==='row'?innerH:innerW;
+  const lines=[]; let cur=null;
+  for(const it of list){
+    const d=dims(it), a=axis==='row'?d.w:d.h, b=axis==='row'?d.h:d.w;
+    if(cur && cur.len+g+a <= main+EPS){ cur.items.push({it,a,b}); cur.len+=g+a; cur.thick=Math.max(cur.thick,b); }
+    else { cur={items:[{it,a,b}],len:a,thick:b}; lines.push(cur); }
+  }
+  const total = lines.reduce((s,l)=>s+l.thick,0) + g*Math.max(0,lines.length-1);
+  const maxLen = Math.max(0,...lines.map(l=>l.len));
+  const fits = innerW>0 && innerH>0 && total<=cross+EPS && maxLen<=main+EPS;
+  const pos={};
+  if(axis==='row'){
+    let y = alignedStart(total, opts);
+    for(const l of lines){
+      let x = l.len>=innerW ? edge : edge+(innerW-l.len)/2;
+      for(const e of l.items){ pos[e.it.id]={x, y:y+(l.thick-e.b)/2}; x+=e.a+g; }
+      y+=l.thick+g;
+    }
+  } else {
+    let x = total>=innerW ? edge : edge+(innerW-total)/2;
+    for(const l of lines){
+      let y = alignedStart(l.len, opts);
+      for(const e of l.items){ pos[e.it.id]={x:x+(l.thick-e.b)/2, y}; y+=e.a+g; }
+      x+=l.thick+g;
+    }
+  }
+  const score = Math.max(total/Math.max(cross,1e-6), maxLen/Math.max(main,1e-6));
+  return {fits,pos,score,axis};
+}
+function bestPack(mode, opts){
+  const orig=[...S.items];
+  const byH=[...S.items].sort((a,b)=>dims(b).h-dims(a).h);
+  const byW=[...S.items].sort((a,b)=>dims(b).w-dims(a).w);
+  const cands=[];
+  if(mode!=='col'){ cands.push(packLines(orig,'row',opts), packLines(byH,'row',opts)); }
+  if(mode!=='row'){ cands.push(packLines(orig,'col',opts), packLines(byW,'col',opts)); }
+  const ok=cands.filter(c=>c.fits);
+  if(ok.length) return ok.reduce((a,b)=> b.score < a.score-0.02 ? b : a);
+  return cands[0];
+}
+const curOpts = () => ({W:+S.W, H:+S.H, edge:+S.edge, gap:+S.gap});
+function applyPack(mode, silent){
+  if(!S.items.length) return;
+  const r = bestPack(mode, curOpts());
+  S.items.forEach(it=>{ const p=r.pos[it.id]; if(p){ it.x=p.x; it.y=p.y; } });
+  if(!silent){ toast(r.fits ? '自動配置しました' : '自動配置しましたが、枠からはみ出しています'); }
+}
+
+/* ---------- checks ---------- */
+function analyze(){
+  const W=+S.W, H=+S.H, edge=+S.edge, gap=+S.gap;
+  const st = {}; S.items.forEach(it=>st[it.id]={bad:false,warn:false,msgs:[]});
+  let oob=0, overlap=0, near=0;
+  S.items.forEach(it=>{
+    const d=dims(it);
+    if(it.x<-EPS || it.y<-EPS || it.x+d.w>W+EPS || it.y+d.h>H+EPS){ st[it.id].bad=true; st[it.id].msgs.push('枠からはみ出しています'); oob++; }
+    else if(it.x<edge-EPS || it.y<edge-EPS || it.x+d.w>W-edge+EPS || it.y+d.h>H-edge+EPS){ st[it.id].warn=true; st[it.id].msgs.push(`壁端まで ${fmt(edge)}cm 未満です`); }
+  });
+  for(let i=0;i<S.items.length;i++) for(let j=i+1;j<S.items.length;j++){
+    const a=S.items[i], b=S.items[j], da=dims(a), db=dims(b);
+    const gx=Math.max(b.x-(a.x+da.w), a.x-(b.x+db.w));
+    const gy=Math.max(b.y-(a.y+da.h), a.y-(b.y+db.h));
+    if(gx<-EPS && gy<-EPS){ overlap++; [a,b].forEach(t=>{st[t.id].bad=true; st[t.id].msgs.push('ほかの作品と重なっています');}); }
+    else { const sep=Math.max(gx,gy); if(sep<gap-EPS){ near++; [a,b].forEach(t=>{st[t.id].warn=true; st[t.id].msgs.push(`隣の作品との間隔が ${fmt(Math.max(0,sep))}cm です`);}); } }
+  }
+  // fit verdict
+  const area = S.items.reduce((s,it)=>{const d=dims(it); return s+d.w*d.h;},0);
+  const pct = W*H>0 ? area/(W*H)*100 : 0;
+  const tooBig = S.items.filter(it=>{const d=dims(it); return d.w>W+EPS||d.h>H+EPS;});
+  let verdict;
+  if(!S.items.length) verdict={k:'idle',t:'作品を追加してください',s:'用紙サイズと枚数を選ぶと、この展示スペースに収まるか判定します。'};
+  else {
+    const best = bestPack('auto', curOpts());
+    if(best.fits) verdict={k:'ok',t:'収まります',s:`壁端の余白 <b>${fmt(edge)}cm</b>・作品の間隔 <b>${fmt(gap)}cm</b> を確保して並べられます。壁面の <b>${Math.round(pct)}%</b> を使用。`};
+    else if(tooBig.length) verdict={k:'ng',t:'収まりません',s:`<b>${nameOf(tooBig[0])}</b>（外寸 ${fmt(dims(tooBig[0]).w)}×${fmt(dims(tooBig[0]).h)}cm）が展示スペースより大きいです。`};
+    else {
+      let lo=0, hi=1, found=null;
+      if(bestPack('auto',{W,H,edge:0,gap:0}).fits){
+        for(let k=0;k<18;k++){ const m=(lo+hi)/2; if(bestPack('auto',{W,H,edge:edge*m,gap:gap*m}).fits){lo=m;found=m;} else hi=m; }
+        if(found===null) found=0;
+        verdict={k:'warn',t:'間隔を詰めれば収まります',s:`今の設定では入りません。壁端の余白を <b>${fmt1(Math.floor(edge*found*10)/10)}cm</b>、間隔を <b>${fmt1(Math.floor(gap*found*10)/10)}cm</b> 以下にすれば並べられます。`};
+      } else verdict={k:'ng',t:'収まりません',s: pct>100 ? `作品の合計面積が壁面の <b>${Math.round(pct)}%</b> あり、物理的に入りません。枚数かサイズを減らしてください。` : `作品の合計面積は壁面の <b>${Math.round(pct)}%</b> ですが、自動配置では並べきれませんでした。手で動かして試すか、サイズを見直してください。`};
+    }
+  }
+  return {st, oob, overlap, near, verdict};
+}
+
+/* ---------- rendering ---------- */
+let scale=1, A=null;
+const stage=$('stage'), wall=$('wall'), piecesEl=$('pieces'), pieceEls=new Map();
+const ICON = {
+  ok:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="8"/><path d="M6 10.5l2.6 2.5L14 7.5"/></svg>',
+  ng:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="8"/><path d="M7 7l6 6M13 7l-6 6"/></svg>',
+  warn:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2.5L18 17H2z"/><path d="M10 8v4M10 14.2v.3"/></svg>',
+  idle:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="14" height="14" rx="1"/><path d="M10 7v6M7 10h6"/></svg>',
+  rot:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="6" width="9" height="11" rx="1"/><path d="M9 3h4a4 4 0 014 4v2"/><path d="M15 7.5l2 2 2-2"/></svg>',
+  del:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 5l10 10M15 5L5 15"/></svg>'
+};
+
+function renderVerdict(){
+  const v=A.verdict;
+  let chips='';
+  if(S.items.length){
+    if(!A.oob && !A.overlap && !A.near) chips='<span class="chip ok">現在の配置：問題なし</span>';
+    else {
+      if(A.oob) chips+=`<span class="chip ng">はみ出し ${A.oob}</span>`;
+      if(A.overlap) chips+=`<span class="chip ng">重なり ${A.overlap}</span>`;
+      if(A.near) chips+=`<span class="chip warn">間隔不足 ${A.near}</span>`;
+    }
+  }
+  $('verdict').innerHTML = `<span class="pill ${v.k}">${ICON[v.k]}${v.t}</span><span class="vtext">${v.s}</span><span class="chips">${chips}</span>`;
+}
+
+function renderList(){
+  $('cnt').textContent = S.items.length;
+  const ul=$('list');
+  if(!S.items.length){ ul.innerHTML='<li class="empty">まだ作品がありません。上のフォームから追加してください。</li>'; return; }
+  ul.innerHTML = S.items.map((it,i)=>{
+    const d=dims(it), s=A.st[it.id], url=imgs.get(it.id);
+    const cls = ['row', S.sel===it.id?'sel':'', s.bad?'bad':(s.warn?'warn':'')].join(' ');
+    const sq = it.bw===it.bh;
+    return `<li class="${cls}" data-id="${it.id}" tabindex="0" title="${s.msgs.join(' / ')}">
+      <span class="idx">${i+1}</span>
+      <span class="th ${url?'has':''}" style="${url?`background-image:url('${url}')`:''}"></span>
+      <span class="nm"><b>${nameOf(it)}</b><small>外寸 ${fmt(d.w)} × ${fmt(d.h)} cm</small></span>
+      <span class="acts">${sq?'':`<button class="icon" data-act="rot" title="向きを変える" aria-label="向きを変える">${ICON.rot}</button>`}<button class="icon" data-act="del" title="削除" aria-label="削除">${ICON.del}</button></span>
+    </li>`;
+  }).join('');
+}
+
+function setVal(id,v){ const el=$(id); if(document.activeElement!==el) el.value=v; }
+function setSeg(id, attr, val){ $(id).querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset[attr]===val))); }
+
+function renderSelected(){
+  const it = S.sel && byId(S.sel);
+  $('selEmpty').hidden = !!it; $('selBox').hidden = !it;
+  if(!it) return;
+  const d=dims(it), i=S.items.indexOf(it);
+  $('selName').textContent = `${i+1}. ${nameOf(it)}`;
+  $('selOrient').style.visibility = it.bw===it.bh ? 'hidden':'visible';
+  setSeg('selOrient','o',it.orient);
+  setVal('selX', fmt1(it.x)); setVal('selY', fmt1(it.y));
+  setVal('selMat', it.mat); setVal('selFrame', it.frame);
+  const floorC = (+S.floor||0) + (S.H - (it.y + d.h/2));
+  const st=A.st[it.id];
+  $('selRead').innerHTML = `
+    <span>用紙 <b>${fmt(d.pw)}×${fmt(d.ph)}</b></span><span>外寸 <b>${fmt(d.w)}×${fmt(d.h)}</b></span>
+    <span>右端まで <b>${fmt1(S.W-it.x-d.w)}</b></span><span>下端まで <b>${fmt1(S.H-it.y-d.h)}</b></span>
+    <span style="grid-column:1/-1">作品の中心は床から <b>${fmt1(floorC)}cm</b></span>
+    ${st.msgs.length?`<span style="grid-column:1/-1;color:${st.bad?'var(--ng)':'var(--warn)'}">${[...new Set(st.msgs)].join('・')}</span>`:''}`;
+  const url=imgs.get(it.id);
+  $('selFile').textContent = url ? '写真を差し替える' : '写真を選ぶ';
+  $('selClear').hidden = !url;
+  $('selPhotoOpts').hidden = !url;
+  if(url){
+    setSeg('selFit','f',it.fit);
+    setVal('selZoom', it.zoom); $('zoomVal').textContent = Math.round(it.zoom*100)+'%';
+    const al=$('selAlert'); const msgs=[];
+    if(it.iw && it.ih){
+      const ri=it.iw/it.ih, rb=d.pw/d.ph;
+      const imgL = ri>1.02, imgP = ri<0.98, frL = rb>1.0001, frP = rb<0.9999;
+      if((imgL&&frP)||(imgP&&frL)) msgs.push(`写真は${imgL?'横':'縦'}向き、枠は${frL?'横':'縦'}向きです。<button class="btn" type="button" id="fixOrient">枠を${imgL?'横':'縦'}向きにする</button>`);
+      else { const crop = (1 - Math.min(ri,rb)/Math.max(ri,rb))*100; if(crop>1.5) msgs.push(`写真と用紙の縦横比が違うため、${it.fit==='cover'?`約 ${Math.round(crop)}% がトリミングされます`:`約 ${Math.round(crop)}% の余白が出ます`}。`); }
+    }
+    al.hidden=!msgs.length; al.innerHTML=msgs.join('');
+  }
+}
+
+function niceStep(){ for(const st of [1,2,5,10,20,25,50,100,200,500]) if(st*scale>=34) return st; return 1000; }
+let rulerKey='';
+function renderWall(){
+  const rect=stage.getBoundingClientRect();
+  const padL=34, padT=30, padR=16, padB=34;
+  const W=+S.W||1, H=+S.H||1;
+  scale = Math.max(0.05, Math.min((rect.width-padL-padR)/W, (rect.height-padT-padB)/H));
+  const ww=W*scale, wh=H*scale;
+  const left = padL + Math.max(0,(rect.width-padL-padR-ww)/2), top = padT + Math.max(0,(rect.height-padT-padB-wh)/2);
+  Object.assign(wall.style,{left:left+'px',top:top+'px',width:ww+'px',height:wh+'px'});
+  wall.style.setProperty('--gs', (10*scale)+'px');
+  const app=$('app');
+  wall.style.backgroundColor = S.mode==='preview' ? S.wallColor : '';
+  const e=+S.edge*scale;
+  Object.assign($('edgeLine').style,{left:e+'px',top:e+'px',width:Math.max(0,ww-2*e)+'px',height:Math.max(0,wh-2*e)+'px'});
+  const ws=$('wsize'); ws.textContent=`展示スペース ${fmt(W)} × ${fmt(H)} cm`;
+  Object.assign(ws.style,{left:left+'px',top:(top+wh+8)+'px'});
+  // rulers
+  const key=[W,H,scale.toFixed(4),left,top].join('|');
+  if(key!==rulerKey){
+    rulerKey=key; const st=niceStep();
+    let h=''; for(let c=0;c<=W+1e-6;c+=st){ const x=c*scale; h+=`<i style="left:${x}px;top:14px;width:1px;height:7px"></i><em style="left:${x}px;top:0;transform:translateX(-50%)">${c}</em>`; }
+    const rt=$('rulerTop'); rt.innerHTML=h; Object.assign(rt.style,{left:left+'px',top:(top-24)+'px',width:ww+'px',height:'22px'});
+    let v=''; for(let c=0;c<=H+1e-6;c+=st){ const y=c*scale; v+=`<i style="top:${y}px;left:22px;height:1px;width:7px"></i><em style="top:${y}px;right:14px;transform:translateY(-50%)">${c}</em>`; }
+    const rl=$('rulerLeft'); rl.innerHTML=v; Object.assign(rl.style,{left:(left-30)+'px',top:top+'px',width:'30px',height:wh+'px'});
+  }
+  // eye line
+  const ey=eyeY(), eyeEl=$('eyeLine');
+  eyeEl.hidden = !(S.eye && ey!==null);
+  if(!eyeEl.hidden) eyeEl.style.top=(ey*scale)+'px';
+  syncPieces();
+  renderDims();
+}
+
+function syncPieces(){
+  const ids=new Set(S.items.map(i=>i.id));
+  for(const [id,el] of pieceEls) if(!ids.has(id)){ el.remove(); pieceEls.delete(id); }
+  S.items.forEach((it,i)=>{
+    let el=pieceEls.get(it.id);
+    if(!el){
+      el=document.createElement('div'); el.className='piece'; el.dataset.id=it.id; el.tabIndex=0;
+      el.innerHTML='<div class="pframe"><div class="pmat"><div class="pphoto"></div></div></div><div class="plabel"></div><div class="pnum"></div><div class="ring"></div>';
+      piecesEl.appendChild(el); pieceEls.set(it.id,el);
+    }
+    updatePiece(el,it,i);
+  });
+}
+function updatePiece(el,it,i){
+  const d=dims(it), s=scale, st=A.st[it.id], url=imgs.get(it.id);
+  Object.assign(el.style,{left:it.x*s+'px',top:it.y*s+'px',width:d.w*s+'px',height:d.h*s+'px',zIndex:S.sel===it.id?5:1});
+  el.className = 'piece' + (S.sel===it.id?' sel':'') + (st.bad?' bad':(st.warn?' warn':'')) + (url?' hasimg':'');
+  el.setAttribute('aria-label', `${i+1}. ${nameOf(it)}`);
+  const fr=el.firstChild, mat=fr.firstChild, ph=mat.firstChild;
+  fr.style.borderWidth = (+it.frame*s)+'px'; fr.style.borderColor = S.frameColor;
+  mat.style.padding = (+it.mat*s)+'px'; mat.style.background = +it.mat>0 ? S.matColor : 'transparent';
+  if(url){
+    const bw=d.pw*s, bh=d.ph*s;
+    const base = it.fit==='cover' ? Math.max(bw/it.iw, bh/it.ih) : Math.min(bw/it.iw, bh/it.ih);
+    const sc = base*it.zoom;
+    ph.style.backgroundImage=`url('${url}')`;
+    ph.style.backgroundSize=`${it.iw*sc+0.6}px ${it.ih*sc+0.6}px`;
+    ph.style.backgroundPosition=`${it.px}% ${it.py}%`;
+    ph.style.backgroundColor = it.fit==='contain' ? (S.matColor) : '';
+  } else { ph.style.backgroundImage=''; ph.style.backgroundSize=''; ph.style.backgroundColor=''; }
+  const lab=el.children[1];
+  const small = d.w*s<70 || d.h*s<50;
+  lab.innerHTML = small ? `<b style="font-size:10px">${i+1}</b>` : `<b>${nameOf(it)}</b><span>${fmt(d.w)}×${fmt(d.h)}</span>${S.mode==='photo'&&!url&&d.h*s>80?'<small>クリックで写真を選ぶ</small>':''}`;
+  el.children[2].textContent = i+1;
+  el.children[2].style.display = small ? 'none' : '';
+}
+
+function renderDims(){
+  const box=$('dims');
+  const it=S.sel && byId(S.sel);
+  if(!it || S.mode==='preview'){ box.innerHTML=''; return; }
+  const d=dims(it), s=scale, W=+S.W, H=+S.H;
+  const cy=(it.y+d.h/2)*s, cx=(it.x+d.w/2)*s;
+  const segs=[
+    ['h',0,it.x,cy,it.x], ['h',it.x+d.w,W,cy,W-it.x-d.w],
+    ['v',0,it.y,cx,it.y], ['v',it.y+d.h,H,cx,H-it.y-d.h]
+  ];
+  box.innerHTML = segs.map(([o,a,b,c,val])=>{
+    if(Math.abs(b-a)*s<4) return '';
+    const lo=Math.min(a,b)*s, len=Math.abs(b-a)*s, mid=lo+len/2;
+    return o==='h'
+      ? `<div class="dim h" style="left:${lo}px;top:${c}px;width:${len}px"></div><div class="dimlab" style="left:${mid}px;top:${c}px">${fmt1(val)}</div>`
+      : `<div class="dim v" style="top:${lo}px;left:${c}px;height:${len}px"></div><div class="dimlab" style="top:${mid}px;left:${c}px">${fmt1(val)}</div>`;
+  }).join('');
+}
+
+function renderAll(){
+  A = analyze();
+  $('app').className = 'app mode-'+S.mode;
+  setSeg('modeSeg','mode',S.mode);
+  renderVerdict(); renderList(); renderSelected(); renderWall();
+  save();
+}
+function renderLive(){ A=analyze(); renderVerdict(); renderWall(); renderSelected(); }
+
+/* ---------- toast ---------- */
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(toast.t); toast.t=setTimeout(()=>t.classList.remove('on'),2200); }
+
+/* ---------- inputs ---------- */
+function bindNum(id,key,min){
+  const el=$(id); el.value=S[key];
+  el.addEventListener('input',()=>{ const v=parseFloat(el.value); if(isNaN(v)) return; S[key]=Math.max(min,v); renderAll(); });
+}
+function initForm(){
+  const sel=$('addSize');
+  sel.innerHTML = SIZES.map(g=>`<optgroup label="${g.g}">${g.items.map(([k,w,h])=>`<option value="${k}">${k}${w?`（${fmt(w)}×${fmt(h)}）`:''}</option>`).join('')}</optgroup>`).join('');
+  sel.value='A3';
+  sel.addEventListener('change',()=>{ $('customFields').hidden = sel.value!=='カスタム'; const s=SIZE_MAP[sel.value]; $('addOrient').style.visibility = (s.w && s.w===s.h || sel.value==='カスタム') ? 'hidden':'visible'; });
+  $('addOrient').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; addOrient=b.dataset.o; setSeg('addOrient','o',addOrient); });
+  $('addBtn').addEventListener('click',()=>{
+    const k=sel.value, n=Math.min(50,Math.max(1,parseInt($('addCount').value)||1));
+    const mat=Math.max(0,parseFloat($('addMat').value)||0), frame=Math.max(0,parseFloat($('addFrame').value)||0);
+    let w,h,o=addOrient;
+    if(k==='カスタム'){ w=parseFloat($('customW').value); h=parseFloat($('customH').value); if(!(w>0&&h>0)){ toast('カスタムの横幅と高さを入力してください'); return; } o = w>h?'L':'P'; }
+    else { w=SIZE_MAP[k].w; h=SIZE_MAP[k].h; }
+    let last;
+    for(let i=0;i<n;i++){ last=newItem(k,w,h,o,mat,frame); S.items.push(last); }
+    S.sel=last.id;
+    applyPack('auto',true); renderAll();
+    toast(`${k} を ${n} 枚追加しました`);
+  });
+  bindNum('wallW','W',10); bindNum('wallH','H',10); bindNum('edge','edge',0); bindNum('gap','gap',0); bindNum('floor','floor',0);
+  $('vAlign').value=S.vAlign; $('vAlign').addEventListener('change',e=>{ S.vAlign=e.target.value; applyPack('auto',true); renderAll(); });
+  $('eyeOn').checked=S.eye; $('eyeOn').addEventListener('change',e=>{ S.eye=e.target.checked; renderAll(); });
+  ['wallColor','frameColor','matColor'].forEach(k=>{ $(k).value=S[k]; $(k).addEventListener('input',e=>{ S[k]=e.target.value; renderAll(); }); });
+  document.querySelectorAll('[data-pack]').forEach(b=>b.addEventListener('click',()=>{ if(!S.items.length) return; applyPack(b.dataset.pack); renderAll(); }));
+  $('centerAllX').addEventListener('click',()=>centerAll('x'));
+  $('centerAllY').addEventListener('click',()=>centerAll('y'));
+  $('modeSeg').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; S.mode=b.dataset.mode; renderAll(); });
+  $('clearAll').addEventListener('click',()=>{
+    const b=$('clearAll');
+    if(b.dataset.armed!=='1'){ b.dataset.armed='1'; b.textContent='もう一度押すと全削除'; setTimeout(()=>{ b.dataset.armed=''; b.textContent='すべて削除'; },3000); return; }
+    S.items.forEach(it=>removeImg(it.id)); S.items=[]; S.sel=null; b.dataset.armed=''; b.textContent='すべて削除'; renderAll();
+  });
+  // list
+  $('list').addEventListener('click',e=>{
+    const li=e.target.closest('.row'); if(!li) return; const it=byId(li.dataset.id);
+    const act=e.target.closest('[data-act]')?.dataset.act;
+    if(act==='del'){ delItem(it.id); return; }
+    if(act==='rot'){ rotate(it); return; }
+    S.sel=it.id; renderAll();
+  });
+  $('list').addEventListener('keydown',e=>{ if(e.key==='Enter'){ const li=e.target.closest('.row'); if(li){ S.sel=li.dataset.id; renderAll(); } } });
+  // selected
+  const numSel=(id,fn)=>$(id).addEventListener('input',e=>{ const v=parseFloat(e.target.value); const it=byId(S.sel); if(!it||isNaN(v)) return; fn(it,v); renderAll(); });
+  numSel('selX',(it,v)=>it.x=v); numSel('selY',(it,v)=>it.y=v);
+  numSel('selMat',(it,v)=>keepCenter(it,()=>it.mat=Math.max(0,v)));
+  numSel('selFrame',(it,v)=>keepCenter(it,()=>it.frame=Math.max(0,v)));
+  $('selOrient').addEventListener('click',e=>{ const b=e.target.closest('button'); const it=byId(S.sel); if(!b||!it||it.orient===b.dataset.o) return; rotate(it); });
+  $('selCenterX').addEventListener('click',()=>{ const it=byId(S.sel); if(!it) return; it.x=(S.W-dims(it).w)/2; renderAll(); });
+  $('selCenterY').addEventListener('click',()=>{ const it=byId(S.sel); if(!it) return; it.y=(S.H-dims(it).h)/2; renderAll(); });
+  $('selDel').addEventListener('click',()=>{ if(S.sel) delItem(S.sel); });
+  $('selFile').addEventListener('click',()=>{ if(S.sel) pickFor(S.sel); });
+  $('selClear').addEventListener('click',()=>{ const it=byId(S.sel); if(!it) return; removeImg(it.id); it.iw=it.ih=0; renderAll(); });
+  $('selFit').addEventListener('click',e=>{ const b=e.target.closest('button'); const it=byId(S.sel); if(!b||!it) return; it.fit=b.dataset.f; renderAll(); });
+  $('selZoom').addEventListener('input',e=>{ const it=byId(S.sel); if(!it) return; it.zoom=parseFloat(e.target.value)||1; renderLive(); save(); });
+  $('selAlert').addEventListener('click',e=>{ if(e.target.id==='fixOrient'){ const it=byId(S.sel); if(it) rotate(it); } });
+  // files
+  $('fileOne').addEventListener('change',async e=>{ const f=e.target.files[0]; const it=byId(pendingId); e.target.value=''; if(f&&it){ await assignFile(it,f); } });
+  $('manyBtn').addEventListener('click',()=>$('fileMany').click());
+  $('fileMany').addEventListener('change',async e=>{ const fs=[...e.target.files]; e.target.value=''; await assignMany(fs); });
+}
+function keepCenter(it,fn){ const d0=dims(it); const cx=it.x+d0.w/2, cy=it.y+d0.h/2; fn(); const d=dims(it); it.x=cx-d.w/2; it.y=cy-d.h/2; }
+function rotate(it){ if(it.bw===it.bh) return; keepCenter(it,()=>it.orient = it.orient==='P'?'L':'P'); it.px=50; it.py=50; renderAll(); }
+function delItem(id){ removeImg(id); S.items=S.items.filter(i=>i.id!==id); if(S.sel===id) S.sel=null; renderAll(); }
+function centerAll(axis){
+  if(!S.items.length) return;
+  const mn=Math.min(...S.items.map(i=>axis==='x'?i.x:i.y)), mx=Math.max(...S.items.map(i=>{const d=dims(i); return axis==='x'?i.x+d.w:i.y+d.h;}));
+  const off=((axis==='x'?S.W:S.H)-(mx-mn))/2 - mn;
+  S.items.forEach(i=>{ if(axis==='x') i.x+=off; else i.y+=off; }); renderAll();
+}
+
+/* ---------- photos ---------- */
+let pendingId=null;
+function pickFor(id){ pendingId=id; $('fileOne').click(); }
+function removeImg(id){ const u=imgs.get(id); if(u){ URL.revokeObjectURL(u); imgs.delete(id); } idb.del(id); }
+function loadImage(blob){
+  return new Promise((res,rej)=>{ const url=URL.createObjectURL(blob); const im=new Image(); im.onload=()=>res({url,iw:im.naturalWidth,ih:im.naturalHeight}); im.onerror=()=>{ URL.revokeObjectURL(url); rej(new Error('decode')); }; im.src=url; });
+}
+async function assignFile(it,file,quiet){
+  try{
+    const r=await loadImage(file);
+    const old=imgs.get(it.id); if(old) URL.revokeObjectURL(old);
+    imgs.set(it.id,r.url); it.iw=r.iw; it.ih=r.ih; it.px=50; it.py=50; it.zoom=1;
+    idb.put(it.id,file);
+    S.sel=it.id;
+    if(!quiet) renderAll();
+    return true;
+  }catch(e){ toast(`「${file.name}」を読み込めませんでした。JPEG・PNG・WebP の画像を使ってください`); return false; }
+}
+async function assignMany(files){
+  files=files.filter(f=>f.type.startsWith('image/')||/\.(jpe?g|png|webp|gif|avif)$/i.test(f.name));
+  if(!files.length) return;
+  let n=0;
+  for(const f of files){
+    let meta; try{ meta=await loadImage(f); URL.revokeObjectURL(meta.url); }catch(e){ toast(`「${f.name}」を読み込めませんでした`); continue; }
+    const land = meta.iw>meta.ih;
+    const empties=S.items.filter(i=>!imgs.has(i.id));
+    if(!empties.length) break;
+    const match = empties.find(i=>{ const d=dims(i); return (d.pw>d.ph)===land || d.pw===d.ph; }) || empties[0];
+    if(await assignFile(match,f,true)) n++;
+  }
+  renderAll();
+  const left=S.items.filter(i=>!imgs.has(i.id)).length;
+  toast(n ? `${n} 枚の写真をはめこみました${left?`（空き枠 ${left}）`:''}` : '空いている枠がありません');
+}
+async function restoreImages(){
+  for(const it of S.items){
+    if(!it.iw) continue;
+    const blob=await idb.get(it.id);
+    if(blob){ try{ const r=await loadImage(blob); imgs.set(it.id,r.url); }catch(e){} }
+  }
+  renderAll();
+}
+
+/* ---------- drag on wall ---------- */
+let drag=null;
+function snap(it,nx,ny,noSnap){
+  const d=dims(it), th=7/scale, W=+S.W, H=+S.H, e=+S.edge, g=+S.gap;
+  const xs=[0,e,W/2,W-e,W], ys=[0,e,H/2,H-e,H];
+  const ey=eyeY(); if(S.eye && ey!==null) ys.push(ey);
+  S.items.forEach(o=>{ if(o===it) return; const od=dims(o);
+    xs.push(o.x,o.x+od.w/2,o.x+od.w,o.x-g,o.x+od.w+g);
+    ys.push(o.y,o.y+od.h/2,o.y+od.h,o.y-g,o.y+od.h+g); });
+  let gx=null, gy=null;
+  if(!noSnap){
+    let best=th, dx=0;
+    for(const off of [0,d.w/2,d.w]) for(const t of xs){ const dd=t-(nx+off); if(Math.abs(dd)<best){ best=Math.abs(dd); dx=dd; gx=t; } }
+    if(gx!==null) nx+=dx;
+    best=th; let dy=0;
+    for(const off of [0,d.h/2,d.h]) for(const t of ys){ const dd=t-(ny+off); if(Math.abs(dd)<best){ best=Math.abs(dd); dy=dd; gy=t; } }
+    if(gy!==null) ny+=dy;
+  }
+  if(gx===null) nx=Math.round(nx*2)/2;
+  if(gy===null) ny=Math.round(ny*2)/2;
+  return {x:nx,y:ny,gx,gy};
+}
+function showGuides(gx,gy){
+  const s=scale; let h='';
+  if(gx!==null) h+=`<div class="guide" style="left:${gx*s}px;top:0;width:1px;height:100%"></div>`;
+  if(gy!==null) h+=`<div class="guide" style="top:${gy*s}px;left:0;height:1px;width:100%"></div>`;
+  $('guides').innerHTML=h;
+}
+wall.addEventListener('pointerdown',e=>{
+  if(e.button>0) return;
+  const el=e.target.closest('.piece');
+  if(!el){ if(S.sel){ S.sel=null; renderAll(); } return; }
+  const it=byId(el.dataset.id);
+  e.preventDefault(); el.focus({preventScroll:true});
+  el.setPointerCapture(e.pointerId);
+  const panning = S.mode==='photo' && imgs.has(it.id);
+  drag={id:it.id, el, sx:e.clientX, sy:e.clientY, ox:it.x, oy:it.y, opx:it.px, opy:it.py, moved:false, pan:panning};
+  if(S.sel!==it.id){ S.sel=it.id; renderAll(); }
+});
+wall.addEventListener('pointermove',e=>{
+  if(!drag) return;
+  const it=byId(drag.id); if(!it) return;
+  const dx=e.clientX-drag.sx, dy=e.clientY-drag.sy;
+  if(!drag.moved && Math.hypot(dx,dy)<3) return;
+  drag.moved=true;
+  if(drag.pan){
+    const d=dims(it), bw=d.pw*scale, bh=d.ph*scale;
+    const base = it.fit==='cover'?Math.max(bw/it.iw,bh/it.ih):Math.min(bw/it.iw,bh/it.ih), sc=base*it.zoom;
+    const ox=it.iw*sc-bw, oy=it.ih*sc-bh;
+    if(ox>1) it.px=Math.min(100,Math.max(0,drag.opx - dx/ox*100));
+    if(oy>1) it.py=Math.min(100,Math.max(0,drag.opy - dy/oy*100));
+    updatePiece(drag.el,it,S.items.indexOf(it));
+    return;
+  }
+  const r=snap(it, drag.ox+dx/scale, drag.oy+dy/scale, e.altKey);
+  it.x=r.x; it.y=r.y;
+  showGuides(r.gx,r.gy);
+  renderLive();
+});
+function endDrag(){
+  if(!drag) return;
+  const d=drag; drag=null; $('guides').innerHTML='';
+  if(!d.moved && S.mode==='photo' && !imgs.has(d.id)) pickFor(d.id);
+  if(d.moved) renderAll();
+}
+wall.addEventListener('pointerup',endDrag);
+wall.addEventListener('pointercancel',endDrag);
+wall.addEventListener('dblclick',e=>{ const el=e.target.closest('.piece'); if(el) pickFor(el.dataset.id); });
+
+document.addEventListener('keydown',e=>{
+  const tag=(document.activeElement&&document.activeElement.tagName)||'';
+  if(/INPUT|SELECT|TEXTAREA/.test(tag)) return;
+  if(!$('pdfModal').hidden) return;
+  const it=S.sel&&byId(S.sel); if(!it) return;
+  const st=e.shiftKey?5:0.5; let used=true;
+  if(e.key==='ArrowLeft') it.x-=st; else if(e.key==='ArrowRight') it.x+=st;
+  else if(e.key==='ArrowUp') it.y-=st; else if(e.key==='ArrowDown') it.y+=st;
+  else if(e.key==='Delete'||e.key==='Backspace') { delItem(it.id); e.preventDefault(); return; }
+  else if(e.key==='Escape'){ S.sel=null; }
+  else used=false;
+  if(used){ e.preventDefault(); renderAll(); }
+});
+
+/* file drop onto stage */
+stage.addEventListener('dragover',e=>{ if([...e.dataTransfer.types].includes('Files')){ e.preventDefault(); stage.classList.add('dragover'); } });
+stage.addEventListener('dragleave',e=>{ if(e.target===stage || !stage.contains(e.relatedTarget)) stage.classList.remove('dragover'); });
+stage.addEventListener('drop',async e=>{
+  e.preventDefault(); stage.classList.remove('dragover');
+  const files=[...e.dataTransfer.files]; if(!files.length) return;
+  const under=document.elementsFromPoint(e.clientX,e.clientY).find(n=>n.classList&&n.classList.contains('piece'));
+  if(under && files.length===1){ const it=byId(under.dataset.id); if(it) await assignFile(it,files[0]); }
+  else await assignMany(files);
+});
+
+/* ---------- PDF export ---------- */
+const PAPER={A4:[210,297],A3:[297,420]};
+const PX=7; // canvas px per mm (~180dpi)
+const ex={paper:'A4',orient:'auto',preview:true,plan:true};
+let exPages=[], exBusy=0, dl=null;
+(async()=>{ try{ dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null; }catch(e){ dl=null; } })();
+const imgCache=new Map();
+function getImg(id){
+  const url=imgs.get(id); if(!url) return Promise.resolve(null);
+  if(!imgCache.has(url)) imgCache.set(url,new Promise(res=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=()=>res(null); im.src=url; }));
+  return imgCache.get(url);
+}
+const FONT='"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif', MONO='"IBM Plex Mono",ui-monospace,monospace';
+function pageDims(){ const [a,b]=PAPER[ex.paper]; const land = ex.orient==='auto' ? (+S.W > +S.H) : ex.orient==='L'; return land?[b,a]:[a,b]; }
+function newPage(){
+  const [w,h]=pageDims(); const c=document.createElement('canvas');
+  c.width=Math.round(w*PX); c.height=Math.round(h*PX);
+  const g=c.getContext('2d'); g.scale(PX,PX); g.fillStyle='#fff'; g.fillRect(0,0,w,h);
+  g.textBaseline='alphabetic'; return {c,g,w,h};
+}
+function txt(g,s,x,y,size,opt={}){
+  g.font=`${opt.w||400} ${size}px ${opt.mono?MONO:FONT}`; g.fillStyle=opt.c||'#1c2228'; g.textAlign=opt.a||'left'; g.fillText(s,x,y);
+}
+function today(){ const d=new Date(); return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`; }
+const M=12;
+function pageHeader(p,kind){
+  const {g,w}=p;
+  txt(g,(S.title||'写真展'),M,M+6,6.2,{w:700});
+  txt(g,kind,M,M+12,3.4,{c:'#5d6974'});
+  txt(g,today(),w-M,M+6,3.2,{a:'right',c:'#5d6974'});
+  txt(g,`展示スペース ${fmt(S.W)} × ${fmt(S.H)} cm ・ 作品 ${S.items.length} 点`,w-M,M+12,3.2,{a:'right',c:'#5d6974'});
+  g.strokeStyle='#1c2228'; g.lineWidth=0.35; g.beginPath(); g.moveTo(M,M+16); g.lineTo(w-M,M+16); g.stroke();
+  return M+16;
+}
+function pageFooter(p,n,total){
+  const {g,w,h}=p;
+  txt(g,'寸法の単位は cm ・ 写真展レイアウトで作成',M,h-7,2.6,{c:'#8a949d'});
+  txt(g,`${n} / ${total}`,w-M,h-7,2.6,{a:'right',c:'#8a949d',mono:true});
+}
+function drawPhoto(g,it,im,bx,by,bw,bh){
+  if(!im){ g.fillStyle='#c9cbcc'; g.fillRect(bx,by,bw,bh); return; }
+  const base = it.fit==='cover' ? Math.max(bw/it.iw,bh/it.ih) : Math.min(bw/it.iw,bh/it.ih);
+  const sc=base*it.zoom, dw=it.iw*sc, dh=it.ih*sc;
+  const dx=bx+(bw-dw)*it.px/100, dy=by+(bh-dh)*it.py/100;
+  g.save(); g.beginPath(); g.rect(bx,by,bw,bh); g.clip();
+  if(it.fit==='contain'){ g.fillStyle=S.matColor; g.fillRect(bx,by,bw,bh); }
+  g.drawImage(im,dx,dy,dw,dh); g.restore();
+}
+async function pagePreview(){
+  const p=newPage(), {g,w,h}=p; const top=pageHeader(p,'完成イメージ');
+  const W=+S.W, H=+S.H, aw=w-2*M-8, ah=h-top-M-22;
+  const k=Math.min(aw/W, ah/H), ww=W*k, wh=H*k, ox=(w-ww)/2, oy=top+8+(ah-wh)/2;
+  g.save(); g.shadowColor='rgba(0,0,0,.18)'; g.shadowBlur=PX*4; g.shadowOffsetY=PX*1;
+  g.fillStyle=S.wallColor; g.fillRect(ox,oy,ww,wh); g.restore();
+  const grad=g.createRadialGradient(ox+ww/2,oy-wh*.1,0,ox+ww/2,oy-wh*.1,Math.max(ww,wh)*.7);
+  grad.addColorStop(0,'rgba(255,250,235,.35)'); grad.addColorStop(1,'rgba(255,250,235,0)');
+  g.fillStyle=grad; g.fillRect(ox,oy,ww,wh);
+  for(const it of S.items){
+    const d=dims(it), x=ox+it.x*k, y=oy+it.y*k, fw=+it.frame*k, mw=+it.mat*k;
+    const im=await getImg(it.id);
+    g.save(); g.beginPath(); g.rect(ox,oy,ww,wh); g.clip();
+    g.save(); g.shadowColor='rgba(0,0,0,.25)'; g.shadowBlur=PX*1.6; g.shadowOffsetY=PX*0.6;
+    g.fillStyle = fw>0 ? S.frameColor : (mw>0 ? S.matColor : '#c9cbcc'); g.fillRect(x,y,d.w*k,d.h*k); g.restore();
+    if(mw>0){ g.fillStyle=S.matColor; g.fillRect(x+fw,y+fw,d.w*k-2*fw,d.h*k-2*fw); }
+    drawPhoto(g,it,im,x+fw+mw,y+fw+mw,d.pw*k,d.ph*k);
+    g.restore();
+  }
+  txt(g,`展示スペース ${fmt(W)} × ${fmt(H)} cm`,w/2,oy+wh+7,3,{a:'center',c:'#5d6974'});
+  return p;
+}
+function planScale(k){ // k = mm per cm on paper; pick a standard 1:N
+  const need=10/k;
+  for(const n of [1,2,2.5,3,4,5,6,8,10,12.5,15,20,25,30,40,50,60,75,100,125,150,200,250,300,500]) if(n>=need-1e-9) return n;
+  return Math.ceil(need/100)*100;
+}
+function planRows(){
+  return S.items.map((it,i)=>{ const d=dims(it);
+    return [String(i+1), nameOf(it), `${fmt(d.w)}×${fmt(d.h)}`, fmt1(it.x), fmt1(it.y), fmt1(it.x+d.w/2), fmt1((+S.floor||0)+(+S.H)-(it.y+d.h/2))]; });
+}
+const COLS=[['No.',0.06,'c'],['作品',0.25,'l'],['外寸',0.16,'r'],['左端から',0.12,'r'],['上端から',0.12,'r'],['中心・左から',0.145,'r'],['中心・床から',0.145,'r']];
+function drawTable(g,x,y,w,rows,rowH){
+  const fs=Math.min(3.1,rowH*0.5);
+  g.fillStyle='#eef1f4'; g.fillRect(x,y,w,rowH*1.15);
+  let cx=x; for(const [lab,f,al] of COLS){ const cw=w*f; txt(g,lab,al==='r'?cx+cw-1.5:al==='c'?cx+cw/2:cx+1.5,y+rowH*0.78,fs*0.92,{w:700,a:al==='r'?'right':al==='c'?'center':'left',c:'#3a444d'}); cx+=cw; }
+  let yy=y+rowH*1.15;
+  rows.forEach((r,ri)=>{
+    if(ri%2===1){ g.fillStyle='#f7f8fa'; g.fillRect(x,yy,w,rowH); }
+    let cx=x; r.forEach((v,ci)=>{ const [,f,al]=COLS[ci], cw=w*f;
+      let s=v; g.font=`400 ${fs}px ${ci===1?FONT:MONO}`; while(s.length>1 && g.measureText(s).width>cw-3) s=s.slice(0,-1);
+      txt(g,s,al==='r'?cx+cw-1.5:al==='c'?cx+cw/2:cx+1.5,yy+rowH*0.68,fs,{mono:ci!==1,a:al==='r'?'right':al==='c'?'center':'left',w:ci===0?700:400}); cx+=cw; });
+    yy+=rowH;
+  });
+  g.strokeStyle='#c9d0d6'; g.lineWidth=0.2; g.strokeRect(x,y,w,yy-y);
+  return yy;
+}
+function drawPlan(g,ox,oy,aw,ah){
+  const W=+S.W, H=+S.H;
+  const n=planScale(Math.min((aw-14)/W,(ah-14)/H)), k=10/n;
+  const ww=W*k, wh=H*k, x0=ox+12+(aw-12-ww)/2, y0=oy+10;
+  // grid
+  g.fillStyle='#ffffff'; g.fillRect(x0,y0,ww,wh);
+  g.strokeStyle='#e4e8ec'; g.lineWidth=0.12;
+  for(let c=10;c<W;c+=10){ g.beginPath(); g.moveTo(x0+c*k,y0); g.lineTo(x0+c*k,y0+wh); g.stroke(); }
+  for(let c=10;c<H;c+=10){ g.beginPath(); g.moveTo(x0,y0+c*k); g.lineTo(x0+ww,y0+c*k); g.stroke(); }
+  // edge margin
+  if(+S.edge>0){ g.save(); g.setLineDash([1.2,1]); g.strokeStyle='#9aa3ab'; g.lineWidth=0.2; g.strokeRect(x0+S.edge*k,y0+S.edge*k,ww-2*S.edge*k,wh-2*S.edge*k); g.restore(); }
+  g.strokeStyle='#1c2228'; g.lineWidth=0.45; g.strokeRect(x0,y0,ww,wh);
+  // rulers
+  let st=10; for(const s of [5,10,20,25,50,100,200]) { if(s*k>=7){ st=s; break; } }
+  g.strokeStyle='#1c2228'; g.lineWidth=0.2;
+  for(let c=0;c<=W+1e-6;c+=st){ const x=x0+c*k; g.beginPath(); g.moveTo(x,y0-1.6); g.lineTo(x,y0); g.stroke(); txt(g,String(c),x,y0-2.4,2.3,{a:'center',mono:true,c:'#5d6974'}); }
+  for(let c=0;c<=H+1e-6;c+=st){ const y=y0+c*k; g.beginPath(); g.moveTo(x0-1.6,y); g.lineTo(x0,y); g.stroke(); txt(g,String(c),x0-2.4,y+0.8,2.3,{a:'right',mono:true,c:'#5d6974'}); }
+  // eye line
+  const ey=eyeY();
+  if(S.eye && ey!==null){ g.save(); g.setLineDash([1.5,1]); g.strokeStyle='#c4602b'; g.lineWidth=0.25; g.beginPath(); g.moveTo(x0,y0+ey*k); g.lineTo(x0+ww,y0+ey*k); g.stroke(); g.restore(); g.font=`400 2.4px ${FONT}`; const ew=g.measureText('目線 床から145').width+1.6; g.fillStyle='#fff'; g.fillRect(x0+ww-1-ew+0.8,y0+ey*k-3.6,ew,3.2); txt(g,'目線 床から145',x0+ww-1,y0+ey*k-1.1,2.4,{a:'right',c:'#c4602b'}); }
+  // pieces
+  S.items.forEach((it,i)=>{
+    const d=dims(it), x=x0+it.x*k, y=y0+it.y*k, pw=d.w*k, ph=d.h*k, bad=A.st[it.id].bad;
+    g.fillStyle=bad?'#fbe6e2':'#e6eef6'; g.fillRect(x,y,pw,ph);
+    g.strokeStyle=bad?'#bb3a2c':'#2c5c8c'; g.lineWidth=0.35; g.strokeRect(x,y,pw,ph);
+    if(+it.frame+ +it.mat>0){ const m=(+it.frame+ +it.mat)*k; g.lineWidth=0.15; g.strokeRect(x+m,y+m,pw-2*m,ph-2*m); }
+    const r=Math.min(3.2,pw*0.28,ph*0.28), cx=x+pw/2, cy=y+ph/2-(ph>18?2:0);
+    g.fillStyle='#fff'; g.beginPath(); g.arc(cx,cy,r,0,Math.PI*2); g.fill(); g.strokeStyle='#2c5c8c'; g.lineWidth=0.3; g.stroke();
+    txt(g,String(i+1),cx,cy+r*0.38,r*1.05,{a:'center',w:700,mono:true,c:'#23405e'});
+    if(ph>18 && pw>16){ txt(g,nameOf(it),cx,cy+r+3.4,2.4,{a:'center',c:'#23405e'}); }
+  });
+  // overall dims
+  g.strokeStyle='#1c2228'; g.lineWidth=0.2;
+  const dy=y0+wh+4; g.beginPath(); g.moveTo(x0,dy); g.lineTo(x0+ww,dy); g.moveTo(x0,dy-1.2); g.lineTo(x0,dy+1.2); g.moveTo(x0+ww,dy-1.2); g.lineTo(x0+ww,dy+1.2); g.stroke();
+  g.fillStyle='#fff'; const lab=`${fmt(W)} cm`; g.font=`500 2.8px ${MONO}`; const tw=g.measureText(lab).width+2; g.fillRect(x0+ww/2-tw/2,dy-1.8,tw,3.6);
+  txt(g,lab,x0+ww/2,dy+1,2.8,{a:'center',mono:true,w:500});
+  const dx=x0-9; g.beginPath(); g.moveTo(dx,y0); g.lineTo(dx,y0+wh); g.moveTo(dx-1.2,y0); g.lineTo(dx+1.2,y0); g.moveTo(dx-1.2,y0+wh); g.lineTo(dx+1.2,y0+wh); g.stroke();
+  g.save(); g.translate(dx,y0+wh/2); g.rotate(-Math.PI/2); g.fillStyle='#fff'; const lab2=`${fmt(H)} cm`; const tw2=g.measureText(lab2).width+2; g.fillRect(-tw2/2,-1.8,tw2,3.6); txt(g,lab2,0,1,2.8,{a:'center',mono:true,w:500}); g.restore();
+  txt(g,`縮尺 1:${n}`,x0+ww,dy+5.5,2.8,{a:'right',w:700});
+  if(+S.floor>0) txt(g,`下端は床から ${fmt(S.floor)} cm`,x0,dy+5.5,2.6,{c:'#5d6974'});
+  return {bottom:dy+7, right:x0+ww};
+}
+function summaryLines(){
+  const v=A.verdict, plain=v.s.replace(/<[^>]+>/g,'');
+  return [`判定：${v.t}（${plain}）`, `壁端の余白 ${fmt(S.edge)} cm ・ 作品の間隔 ${fmt(S.gap)} cm`,
+    (A.oob||A.overlap||A.near) ? `注意：はみ出し ${A.oob} ・ 重なり ${A.overlap} ・ 間隔不足 ${A.near}` : '現在の配置：はみ出し・重なり・間隔不足はありません'];
+}
+function wrapText(g,s,maxW,size){
+  g.font=`400 ${size}px ${FONT}`; const out=[]; let line='';
+  for(const ch of s){ if(g.measureText(line+ch).width>maxW && line){ out.push(line); line=ch; } else line+=ch; }
+  if(line) out.push(line); return out;
+}
+function pagesPlan(){
+  const pages=[]; const rows=planRows(); const rowH=6;
+  let p=newPage(); let top=pageHeader(p,'設置図（寸法と位置の一覧）'); const {w,h}=p;
+  const land=w>h;
+  let tx,ty,tw,avail;
+  if(land){
+    const aw=(w-2*M)*0.52; drawPlan(p.g,M,top+4,aw,h-top-M-20);
+    tx=M+aw+8; ty=top+8; tw=w-M-tx;
+  } else {
+    const r=drawPlan(p.g,M,top+4,w-2*M,(h-top-M)*0.6); tx=M; ty=r.bottom+6; tw=w-2*M;
+  }
+  // summary
+  let yy=ty;
+  for(const ln of summaryLines()) for(const l of wrapText(p.g,ln,tw,2.9)){ txt(p.g,l,tx,yy+3,2.9,{c:'#3a444d'}); yy+=4.4; }
+  yy+=3;
+  let i=0;
+  while(i<rows.length || i===0){
+    const fit=Math.max(1,Math.floor((h-M-14-yy-rowH*1.15)/rowH));
+    const chunk=rows.slice(i,i+fit);
+    if(chunk.length) drawTable(p.g,tx,yy,tw,chunk,rowH);
+    i+=fit; pages.push(p);
+    if(i>=rows.length) break;
+    p=newPage(); yy=pageHeader(p,'設置図（つづき）')+8; tx=M; tw=w-2*M;
+  }
+  return pages;
+}
+async function buildPages(){
+  const id=++exBusy;
+  if(document.fonts && document.fonts.ready) { try{ await document.fonts.ready; }catch(e){} }
+  A=analyze();
+  const out=[];
+  if(ex.preview) out.push({kind:'完成イメージ', p:await pagePreview()});
+  if(ex.plan) pagesPlan().forEach((p,i)=>out.push({kind:i?'設置図（つづき）':'設置図',p}));
+  if(id!==exBusy) return;
+  out.forEach((o,i)=>pageFooter(o.p,i+1,out.length));
+  exPages=out;
+  const th=$('thumbs'); th.innerHTML='';
+  if(!out.length){ th.innerHTML='<p class="note">入れるページを1つ以上選んでください。</p>'; }
+  out.forEach((o,i)=>{ const f=document.createElement('figure'); f.appendChild(o.p.c); const cap=document.createElement('figcaption'); cap.textContent=`${i+1}. ${o.kind}`; f.appendChild(cap); th.appendChild(f); });
+  $('pdfSave').disabled=!out.length;
+}
+function openPdf(){
+  $('exTitle').value=S.title||'';
+  setSeg('exPaper','v',ex.paper); setSeg('exOrient','v',ex.orient);
+  $('exPreview').checked=ex.preview; $('exPlan').checked=ex.plan;
+  $('pdfMsg').textContent = S.items.some(i=>!imgs.has(i.id)) ? '写真が入っていない枠は灰色で出力されます。' : '';
+  $('pdfModal').hidden=false; $('thumbs').innerHTML='<p class="note">ページを作成しています…</p>';
+  buildPages();
+}
+function closePdf(){ $('pdfModal').hidden=true; $('thumbs').innerHTML=''; exPages=[]; }
+async function savePdf(){
+  const msg=$('pdfMsg');
+  if(!window.jspdf){ msg.textContent='PDF作成ライブラリを読み込めませんでした。ページを再読み込みしてください。'; return; }
+  if(!exPages.length) return;
+  const btn=$('pdfSave'); btn.disabled=true; msg.textContent='PDFを作成しています…';
+  try{
+    const first=exPages[0].p;
+    const doc=new window.jspdf.jsPDF({unit:'mm',format:[first.w,first.h],orientation:first.w>first.h?'landscape':'portrait',compress:true});
+    exPages.forEach((o,i)=>{ const p=o.p; if(i) doc.addPage([p.w,p.h], p.w>p.h?'landscape':'portrait'); doc.addImage(p.c.toDataURL('image/jpeg',0.92),'JPEG',0,0,p.w,p.h,undefined,'FAST'); });
+    const blob=doc.output('blob');
+    const name=((S.title||'写真展').replace(/[\\/:*?"<>|]/g,'_').trim()||'写真展')+'_レイアウト.pdf';
+    if(dl){ await dl.save({filename:name,data:blob}); }
+    else { const u=URL.createObjectURL(blob), a=document.createElement('a'); a.href=u; a.download=name; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),10000); }
+    msg.textContent=''; toast('PDFを保存しました'); closePdf();
+  }catch(e){
+    const c=e&&e.code;
+    msg.textContent = c==='declined' ? '保存をキャンセルしました。' : c==='rate_limited' ? '保存の確認がすでに開いています。少し待ってからもう一度押してください。' : c==='too_large' ? 'ファイルが大きすぎます。ページを減らして試してください。' : 'PDFを保存できませんでした。';
+  }finally{ btn.disabled=false; }
+}
+function initPdf(){
+  $('pdfOpen').addEventListener('click',openPdf);
+  $('pdfClose').addEventListener('click',closePdf); $('pdfCancel').addEventListener('click',closePdf);
+  $('pdfModal').addEventListener('click',e=>{ if(e.target.id==='pdfModal') closePdf(); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !$('pdfModal').hidden) closePdf(); });
+  $('pdfSave').addEventListener('click',savePdf);
+  let t; $('exTitle').addEventListener('input',e=>{ S.title=e.target.value; save(); clearTimeout(t); t=setTimeout(buildPages,300); });
+  [['exPaper','paper'],['exOrient','orient']].forEach(([id,key])=>$(id).addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; ex[key]=b.dataset.v; setSeg(id,'v',ex[key]); buildPages(); }));
+  $('exPreview').addEventListener('change',e=>{ ex.preview=e.target.checked; buildPages(); });
+  $('exPlan').addEventListener('change',e=>{ ex.plan=e.target.checked; buildPages(); });
+}
+
+/* ---------- boot ---------- */
+if(!load()) defaultState();
+S.items.forEach(it=>{ if(it.zoom==null) it.zoom=1; });
+initForm(); initPdf();
+new ResizeObserver(()=>{ if(A) renderWall(); }).observe(stage);
+renderAll();
+restoreImages();
+})();
+</script>
+
+</body></html>
